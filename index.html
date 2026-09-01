@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제주 경매 권리분석 노트</title>
+<meta name="description" content="제주 부동산 경매 권리분석 사례와 회차별 가격 전망 시뮬레이터. 말소기준권리·대항력·실질 매입가까지 한 번에 정리합니다.">
+<meta name="author" content="제주 경매 권리분석 노트">
+<meta property="og:type" content="website">
+<meta property="og:title" content="제주 경매 권리분석 노트">
+<meta property="og:description" content="싼 데는 이유가 있습니다 — 인수 보증금까지 계산한 실질 매입가와 회차별 가격 전망.">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏠</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#faf8f5; --surface:#ffffff; --surface-2:#f4f1ec;
+  --ink:#1c1a17; --ink-2:#55504a; --ink-3:#8a837a;
+  --line:#e5dfd6; --line-2:#d5cec2;
+  --accent:#8a2f26; --accent-soft:#f6ebe8;
+  --good:#1f6b4f; --good-soft:#e8f2ed;
+  --warn:#a8631a; --warn-soft:#fbf0e2;
+  --bad:#a3251c; --bad-soft:#fbebe9;
+  --shadow:0 1px 2px rgba(28,26,23,.05),0 8px 24px -12px rgba(28,26,23,.18);
+  --serif:"Nanum Myeongjo",Georgia,"Apple SD Gothic Neo","Noto Serif KR",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+:root:not([data-theme="light"]){}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14120f; --surface:#1c1a16; --surface-2:#232019;
+    --ink:#f2ede4; --ink-2:#bdb5a8; --ink-3:#8b8377;
+    --line:#302c25; --line-2:#3d382f;
+    --accent:#e08b7e; --accent-soft:#2c1e1b;
+    --good:#6fc9a2; --good-soft:#16261f;
+    --warn:#e0a95f; --warn-soft:#2a2016;
+    --bad:#e88478; --bad-soft:#2b1b19;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 28px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14120f; --surface:#1c1a16; --surface-2:#232019;
+  --ink:#f2ede4; --ink-2:#bdb5a8; --ink-3:#8b8377;
+  --line:#302c25; --line-2:#3d382f;
+  --accent:#e08b7e; --accent-soft:#2c1e1b;
+  --good:#6fc9a2; --good-soft:#16261f;
+  --warn:#e0a95f; --warn-soft:#2a2016;
+  --bad:#e88478; --bad-soft:#2b1b19;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 28px -14px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:960px;margin:0 auto;padding:0 24px}
+h1,h2,h3{font-family:var(--serif);font-weight:700;line-height:1.25;letter-spacing:-.01em;margin:0}
+a{color:inherit}
+
+/* header */
+.topbar{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar .wrap{display:flex;align-items:center;justify-content:space-between;height:60px;gap:16px}
+.brand{font-family:var(--serif);font-size:17px;font-weight:700;letter-spacing:-.02em}
+.brand span{color:var(--accent)}
+.nav{display:flex;gap:20px;font-size:13.5px;color:var(--ink-2)}
+.nav a{text-decoration:none}
+.nav a:hover{color:var(--accent)}
+@media(max-width:720px){.nav{display:none}}
+.callbtn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#fff;border-radius:999px;padding:8px 16px;font-size:13.5px;font-weight:600;text-decoration:none;white-space:nowrap}
+:root[data-theme="dark"] .callbtn,:root:not([data-theme="light"]) .callbtn{color:#1a1310}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .callbtn{color:#fff}}
+
+/* hero */
+.hero{padding:76px 0 56px;border-bottom:1px solid var(--line)}
+.eyebrow{font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:20px}
+.hero h1{font-size:clamp(34px,5.6vw,54px)}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero p.lede{font-size:18px;color:var(--ink-2);max-width:56ch;margin:22px 0 0;line-height:1.75}
+.hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px;align-items:center}
+.btn-lg{display:inline-flex;align-items:center;gap:9px;background:var(--accent);color:#fff;border-radius:10px;padding:14px 22px;font-size:15px;font-weight:700;text-decoration:none;box-shadow:var(--shadow)}
+.btn-ghost{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-2);border-radius:10px;padding:13px 20px;font-size:15px;font-weight:600;text-decoration:none;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:44px}
+.stat{background:var(--surface);padding:18px 20px}
+.stat b{display:block;font-family:var(--serif);font-size:27px;line-height:1.2}
+.stat small{display:block;color:var(--ink-3);font-size:12.5px;margin-top:4px}
+
+section{padding:66px 0;border-bottom:1px solid var(--line)}
+.sec-head{margin-bottom:34px}
+.sec-head .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:10px}
+.sec-head h2{font-size:clamp(25px,3.6vw,34px)}
+.sec-head p{color:var(--ink-2);margin:12px 0 0;max-width:60ch}
+
+.notice{background:var(--warn-soft);border:1px solid color-mix(in srgb,var(--warn) 35%,transparent);border-radius:10px;padding:14px 18px;font-size:13.5px;color:var(--ink-2);line-height:1.6}
+.notice b{color:var(--warn)}
+
+/* principles */
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:var(--shadow)}
+.pnum{font-family:var(--serif);font-size:13px;color:var(--accent);font-weight:700;letter-spacing:.1em}
+.pcard h3{font-size:19px;margin:10px 0 10px}
+.pcard p{margin:0;font-size:14.5px;color:var(--ink-2);line-height:1.7}
+
+/* case */
+.case{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:28px}
+.case-top{padding:26px 28px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;justify-content:space-between}
+.case-top h3{font-size:22px}
+.case-top .addr{color:var(--ink-3);font-size:13.5px;margin-top:6px}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.04em;padding:5px 11px;border-radius:999px;white-space:nowrap}
+.tag.ok{background:var(--good-soft);color:var(--good)}
+.tag.no{background:var(--bad-soft);color:var(--bad)}
+.tag.mid{background:var(--warn-soft);color:var(--warn)}
+.tag.gray{background:var(--surface-2);color:var(--ink-3)}
+.case-body{padding:24px 28px 28px}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:24px}
+.kv div{background:var(--surface);padding:13px 15px}
+.kv dt{font-size:11.5px;color:var(--ink-3);margin-bottom:3px}
+.kv dd{margin:0;font-family:var(--serif);font-size:18px;font-weight:700}
+.kv dd.sm{font-size:14px;font-family:var(--sans);font-weight:600}
+
+h4.mini{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 12px;font-family:var(--sans);font-weight:700}
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:24px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:520px}
+th{text-align:left;font-weight:700;color:var(--ink-3);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;padding:0 12px 9px;border-bottom:1px solid var(--line-2)}
+td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr:last-child td{border-bottom:none}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.pill{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pill.x{background:var(--surface-2);color:var(--ink-3)}
+.pill.take{background:var(--bad-soft);color:var(--bad)}
+.pill.base{background:var(--accent-soft);color:var(--accent)}
+
+.verdict{border-left:3px solid var(--accent);background:var(--surface-2);border-radius:0 10px 10px 0;padding:18px 20px;font-size:14.5px;line-height:1.75}
+.verdict b{color:var(--accent)}
+.verdict .big{font-family:var(--serif);font-size:20px;display:block;margin-bottom:8px;color:var(--ink)}
+
+/* forecast tool */
+.tool{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:26px 28px}
+.tool-tabs{display:flex;gap:8px;margin-bottom:22px;flex-wrap:wrap}
+.tool-tabs button{font-family:var(--sans);font-size:13.5px;font-weight:600;padding:9px 16px;border-radius:999px;border:1px solid var(--line-2);background:transparent;color:var(--ink-2);cursor:pointer}
+.tool-tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+:root[data-theme="dark"] .tool-tabs button[aria-selected="true"]{color:#1a1310}
+.chartbox{position:relative;margin-bottom:8px}
+svg.chart{width:100%;height:auto;display:block;overflow:visible}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:12.5px;color:var(--ink-2);margin:10px 0 24px}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.sliderow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.sliderow label{font-size:13px;color:var(--ink-3);font-weight:600;min-width:76px}
+input[type=range]{flex:1;min-width:180px;accent-color:var(--accent)}
+.bidval{font-family:var(--serif);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.calcgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.calcgrid div{background:var(--surface);padding:14px 16px}
+.calcgrid dt{font-size:11.5px;color:var(--ink-3);margin-bottom:4px}
+.calcgrid dd{margin:0;font-family:var(--serif);font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+.result{margin-top:16px;border-radius:10px;padding:16px 18px;font-size:14.5px;line-height:1.7}
+.result.good{background:var(--good-soft);color:var(--good)}
+.result.bad{background:var(--bad-soft);color:var(--bad)}
+.result b{font-family:var(--serif);font-size:17px}
+
+/* checklist */
+.check{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.citem{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.citem h4{margin:0 0 6px;font-size:15px;font-family:var(--sans);font-weight:700}
+.citem p{margin:0;font-size:13.5px;color:var(--ink-2);line-height:1.65}
+.citem .no{color:var(--bad);font-weight:600}
+
+/* cta */
+.cta{background:var(--surface);border:1px solid var(--line-2);border-radius:18px;padding:40px 36px;text-align:center;box-shadow:var(--shadow)}
+.cta h2{font-size:clamp(24px,3.4vw,32px)}
+.cta p{color:var(--ink-2);max-width:52ch;margin:14px auto 0}
+.phone{font-family:var(--serif);font-size:clamp(30px,5vw,42px);font-weight:700;color:var(--accent);text-decoration:none;display:inline-block;margin:26px 0 6px;letter-spacing:-.01em}
+.cta small{display:block;color:var(--ink-3);font-size:13px}
+footer{padding:34px 0 60px;color:var(--ink-3);font-size:12.5px;line-height:1.7}
+</style>
+<style>
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="wrap">
+  <div class="brand">제주 <span>경매 권리분석</span> 노트</div>
+  <nav class="nav">
+    <a href="#principle">원칙</a><a href="#cases">사례 분석</a><a href="#forecast">가격 전망</a><a href="#check">체크리스트</a>
+  </nav>
+  <a class="callbtn" href="tel:01000000000">전화 상담</a>
+</div></div>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="eyebrow">Jeju Auction · Rights Analysis</div>
+  <h1>싼 데는<br><em>이유가 있습니다.</em></h1>
+  <p class="lede">감정가의 49%까지 떨어진 빌라와, 한 번만 유찰된 아파트. 초보자는 대부분 싼 쪽을 고릅니다. 그런데 그 빌라에는 낙찰자가 <b>1억 3천만원을 따로 물어줘야 하는</b> 임차인이 살고 있습니다. 등기부에는 한 줄도 안 나옵니다.</p>
+  <div class="hero-actions">
+    <a class="btn-lg" href="tel:01000000000">☎ 물건 하나 봐드립니다 · 010-0000-0000</a>
+    <a class="btn-ghost" href="#forecast">가격 전망 계산기 →</a>
+  </div>
+  <div class="stats">
+    <div class="stat"><b>2건</b><small>실제 분석 사례 공개</small></div>
+    <div class="stat"><b>1.3억</b><small>사례 02의 숨은 인수금액</small></div>
+    <div class="stat"><b>4회차</b><small>손익분기 도달 예상 유찰 횟수</small></div>
+    <div class="stat"><b>0원</b><small>사례 01의 인수 부담</small></div>
+  </div>
+</header>
+
+<section>
+  <div class="notice"><b>⚠ 고지</b> — 이 페이지의 사건번호·당사자·소재지·금액은 모두 <b>교육용으로 창작한 가상 사례</b>입니다. 실제 경매 사건이나 법원 공문서가 아니며, 분석 방법론을 보여주기 위한 예시입니다. 실제 물건 검토는 전화로 문의해 주세요.</div>
+</section>
+
+<section id="principle">
+  <div class="sec-head">
+    <div class="kicker">권리분석 3원칙</div>
+    <h2>낙찰가는 매입가가 아닙니다</h2>
+    <p>경매에서 돈을 잃는 사람은 대개 계산을 안 해서가 아니라, <b>계산에 넣지 않은 항목</b> 때문에 잃습니다.</p>
+  </div>
+  <div class="grid3">
+    <div class="pcard"><div class="pnum">01</div><h3>말소기준권리부터 찾는다</h3><p>(근)저당·압류·가압류·담보가등기·경매개시결정 중 <b>가장 먼저 접수된 것</b>. 이 날짜 하나가 모든 권리의 생사를 가릅니다. 이보다 뒤면 소멸, 앞이면 인수 검토 대상입니다.</p></div>
+    <div class="pcard"><div class="pnum">02</div><h3>대항력과 우선변제권은 다르다</h3><p>대항력은 <b>인도+전입</b>만으로 생깁니다. 확정일자는 <b>배당받을 권리</b>의 요건일 뿐입니다. "확정일자가 없으니 임차인은 권리가 없다"는 가장 비싼 오답입니다.</p></div>
+    <div class="pcard"><div class="pnum">03</div><h3>실질 매입가로 환산한다</h3><p>낙찰가 + 인수 보증금 + 취득세(약 4.6%) + 공용 체납관리비 + 명도비. 이 합계를 시세와 비교하기 전까지 그 물건은 싼 것도 비싼 것도 아닙니다.</p></div>
+  </div>
+</section>
+
+<section id="cases">
+  <div class="sec-head">
+    <div class="kicker">사례 분석</div>
+    <h2>같은 날 나온 두 물건, 정반대의 결론</h2>
+    <p>아래 두 건은 등기부만 보면 거의 똑같습니다. 차이는 임차인 <b>전입일 한 줄</b>에서 갈립니다.</p>
+  </div>
+
+  <!-- CASE 1 -->
+  <article class="case">
+    <div class="case-top">
+      <div>
+        <h3>사례 01 · 제주시 연동 아파트</h3>
+        <div class="addr">2025타경51234 · 임의경매 · 전용 84.97㎡ · 15층 중 10층 · 2012년 준공</div>
+      </div>
+      <div><span class="tag ok">입찰 적합</span> <span class="tag gray">난이도 쉬움</span></div>
+    </div>
+    <div class="case-body">
+      <dl class="kv">
+        <div><dt>감정가</dt><dd>3억 8,000만</dd></div>
+        <div><dt>최저가 (1회 유찰)</dt><dd>2억 6,600만</dd></div>
+        <div><dt>인근 시세</dt><dd>3억 7,200만</dd></div>
+        <div><dt>인수 금액</dt><dd style="color:var(--good)">0원</dd></div>
+      </dl>
+
+      <h4 class="mini">등기부 권리관계</h4>
+      <div class="tablewrap"><table>
+        <thead><tr><th>접수일</th><th>권리</th><th>권리자</th><th class="num">금액</th><th>매각 후</th></tr></thead>
+        <tbody>
+          <tr><td>2019-03-15</td><td>소유권이전</td><td>김제주</td><td class="num">—</td><td><span class="pill x">—</span></td></tr>
+          <tr><td>2019-03-15</td><td>근저당권</td><td>○○은행</td><td class="num">3억 1,200만</td><td><span class="pill base">말소기준권리 · 소멸</span></td></tr>
+          <tr><td>2023-06-20</td><td>근저당권</td><td>○○캐피탈</td><td class="num">6,000만</td><td><span class="pill x">소멸</span></td></tr>
+          <tr><td>2025-02-10</td><td>임의경매개시</td><td>○○은행</td><td class="num">—</td><td><span class="pill x">소멸</span></td></tr>
+        </tbody>
+      </table></div>
+
+      <h4 class="mini">임차인 — 박한라</h4>
+      <div class="tablewrap"><table>
+        <thead><tr><th>전입신고</th><th>확정일자</th><th>배당요구</th><th class="num">보증금</th><th>대항력</th></tr></thead>
+        <tbody><tr><td>2023-09-01</td><td>2023-09-01</td><td>2025-04-10</td><td class="num">4,500만</td><td><span class="pill x">없음</span></td></tr></tbody>
+      </table></div>
+
+      <div class="verdict">
+        <span class="big">인수 0원 — 계산이 끝나는 물건</span>
+        전입일 2023-09-01은 말소기준권리 2019-03-15보다 <b>4년 반 뒤</b>입니다. 대항력이 없으니 배당받지 못한 보증금이 남아도 낙찰자와는 무관합니다. 오히려 임차인은 소액임차인 최우선변제 <b>2,500만원</b>을 받으려면 낙찰자의 <b>명도확인서</b>가 필요해, 명도 협상에서 지렛대가 생깁니다.<br><br>
+        2억 8,500만원 낙찰 가정 시 취득세·공용 체납관리비·명도비를 더한 실질 매입가는 약 <b>3억 71만원</b>. 시세 3억 7,200만원 대비 약 <b>7,100만원</b>의 여유 구간입니다.
+      </div>
+    </div>
+  </article>
+
+  <!-- CASE 2 -->
+  <article class="case">
+    <div class="case-top">
+      <div>
+        <h3>사례 02 · 서귀포 동홍동 다세대</h3>
+        <div class="addr">2025타경52871 · 임의경매 · 전용 59.88㎡ · 4층 중 2층 · 2008년 준공</div>
+      </div>
+      <div><span class="tag no">입찰 부적합</span> <span class="tag mid">난이도 보통</span></div>
+    </div>
+    <div class="case-body">
+      <dl class="kv">
+        <div><dt>감정가</dt><dd>1억 9,500만</dd></div>
+        <div><dt>최저가 (2회 유찰)</dt><dd>9,555만</dd></div>
+        <div><dt>인근 시세</dt><dd>1억 8,500만</dd></div>
+        <div><dt>인수 금액</dt><dd style="color:var(--bad)">1억 3,000만</dd></div>
+      </dl>
+
+      <h4 class="mini">등기부 권리관계 — 여기까지는 깨끗합니다</h4>
+      <div class="tablewrap"><table>
+        <thead><tr><th>접수일</th><th>권리</th><th>권리자</th><th class="num">금액</th><th>매각 후</th></tr></thead>
+        <tbody>
+          <tr><td>2016-05-20</td><td>소유권이전</td><td>이서귀</td><td class="num">—</td><td><span class="pill x">—</span></td></tr>
+          <tr><td>2021-11-30</td><td>근저당권</td><td>○○농협</td><td class="num">9,600만</td><td><span class="pill base">말소기준권리 · 소멸</span></td></tr>
+          <tr><td>2024-08-14</td><td>가압류</td><td>○○카드</td><td class="num">1,200만</td><td><span class="pill x">소멸</span></td></tr>
+          <tr><td>2025-03-05</td><td>임의경매개시</td><td>○○농협</td><td class="num">—</td><td><span class="pill x">소멸</span></td></tr>
+        </tbody>
+      </table></div>
+
+      <h4 class="mini">임차인 — 최올레 · 여기서 물건이 뒤집힙니다</h4>
+      <div class="tablewrap"><table>
+        <thead><tr><th>전입신고</th><th>확정일자</th><th>배당요구</th><th class="num">보증금</th><th>매각 후</th></tr></thead>
+        <tbody><tr><td><b>2019-04-02</b><br><small style="color:var(--ink-3)">말소기준보다 2년 8개월 앞섬</small></td><td>없음</td><td>없음</td><td class="num">1억 3,000만</td><td><span class="pill take">전액 낙찰자 인수</span></td></tr></tbody>
+      </table></div>
+
+      <div class="verdict">
+        <span class="big">확정일자가 없어서 더 위험한 물건</span>
+        확정일자가 없으니 <b>배당표에 이름조차 오르지 않습니다.</b> 그런데 대항력은 전입만으로 살아 있습니다. 즉 임차인은 경매에서 한 푼도 못 받고, 그 1억 3천만원은 <b>낙찰자가 나갈 때 직접 물어줘야</b> 합니다.<br><br>
+        최저가 9,555만원에 낙찰받아도 실질 매입가는 <b>2억 2,994만원</b>. 시세 1억 8,500만원 대비 <b>약 4,500만원 손실</b>입니다. 손익분기 입찰가는 <b>약 5,258만원</b> — 3회 유찰(6,689만)로도 부족하고, <b>4회 유찰</b> 이후에야 검토 가능한 수준입니다. 두 번 유찰된 이유는 시장이 이미 알고 있었기 때문입니다.
+      </div>
+    </div>
+  </article>
+</section>
+
+<section id="forecast">
+  <div class="sec-head">
+    <div class="kicker">가격 전망 시뮬레이터</div>
+    <h2>앞으로 얼마까지 떨어지고, 언제 사도 되는가</h2>
+    <p>제주지법 기준 유찰 시 <b>30% 저감</b>을 적용해 회차별 최저가를 전개하고, 인수 금액과 취득세를 얹은 <b>실질 매입가</b>를 시세와 나란히 놓습니다. 두 선이 만나는 지점이 그 물건의 손익분기입니다.</p>
+  </div>
+
+  <div class="tool">
+    <div class="tool-tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-case="0">사례 01 · 연동 아파트</button>
+      <button role="tab" aria-selected="false" data-case="1">사례 02 · 동홍동 다세대</button>
+    </div>
+
+    <div class="chartbox"><svg class="chart" id="chart" viewBox="0 0 720 300" role="img" aria-label="회차별 최저가 저감 전망 차트"></svg></div>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>회차별 최저가</span>
+      <span><i style="background:var(--bad)"></i>실질 매입가 (인수+세금 포함)</span>
+      <span><i style="background:var(--good)"></i>시세</span>
+      <span><i style="background:var(--ink-3);opacity:.5"></i>향후 전망 구간</span>
+    </div>
+
+    <div class="sliderow">
+      <label for="bid">입찰가</label>
+      <input type="range" id="bid" min="0" max="100" value="50">
+      <span class="bidval" id="bidval">—</span>
+    </div>
+
+    <dl class="calcgrid">
+      <div><dt>낙찰가</dt><dd id="c-bid">—</dd></div>
+      <div><dt>인수 보증금</dt><dd id="c-take">—</dd></div>
+      <div><dt>취득세 등 4.6%</dt><dd id="c-tax">—</dd></div>
+      <div><dt>실질 매입가</dt><dd id="c-total">—</dd></div>
+    </dl>
+    <div class="result" id="result"></div>
+  </div>
+</section>
+
+<section id="check">
+  <div class="sec-head">
+    <div class="kicker">AI에게 시킬 때의 검증 포인트</div>
+    <h2>AI 권리분석이 가장 자주 틀리는 4곳</h2>
+    <p>요즘은 물건 자료를 AI에 넣고 분석시키는 분이 많습니다. 문제는 <b>틀린 답이 아주 그럴듯하게</b> 나온다는 점입니다.</p>
+  </div>
+  <div class="check">
+    <div class="citem"><h4>① 인수 보증금을 매입가에 안 더한다</h4><p><span class="no">"감정가 대비 49%로 저렴하여 투자 매력 있음"</span> — 사례 02에서 가장 흔한 오답입니다. 낙찰가만 보고 결론을 냅니다.</p></div>
+    <div class="citem"><h4>② 소액임차인 요건 3가지를 다 안 본다</h4><p>대항요건 시점, <span class="no">배당요구 여부</span>, 배당 시까지 유지 — 이 중 배당요구를 빠뜨리는 답변이 많습니다.</p></div>
+    <div class="citem"><h4>③ 대항력을 전입 당일로 계산한다</h4><p>대항력은 전입신고 <b>다음 날 0시</b>에 발생합니다. 하루 차이로 순위가 뒤집히는 물건이 실제로 있습니다.</p></div>
+    <div class="citem"><h4>④ 확정일자 없음 = 권리 없음으로 본다</h4><p><span class="no">가장 비싼 오답.</span> 확정일자는 배당의 요건이고, 대항력은 인도+전입만으로 생깁니다. 별개의 권리입니다.</p></div>
+  </div>
+</section>
+
+<section style="border-bottom:none">
+  <div class="cta">
+    <h2>물건 하나, 5분이면 봐드립니다</h2>
+    <p>사건번호만 알려주시면 말소기준권리·인수 여부·손익분기 입찰가까지 정리해서 알려드립니다. 입찰 전날이라도 괜찮습니다.</p>
+    <a class="phone" href="tel:01000000000">010-0000-0000</a>
+    <small>제주 전역 · 평일 09:00–20:00 · 문자 남기시면 회신드립니다</small>
+  </div>
+</section>
+
+<footer>
+  제주 경매 권리분석 노트 · 본 페이지의 사례는 교육 목적으로 창작한 가상 사건이며 실제 사건·당사자와 무관합니다.<br>
+  게시 내용은 일반적인 정보 제공이며 법률 자문이 아닙니다. 실제 입찰 판단은 등기부등본·매각물건명세서 원본과 전문가 상담을 거쳐 결정하시기 바랍니다.
+</footer>
+
+</div>
+
+<script>
+const CASES=[
+ {name:"제주시 연동 아파트",appraisal:380000000,rounds:[380000000,266000000],start:2,take:0,market:372000000,extra:2600000,minLabel:"1회 유찰"},
+ {name:"서귀포 동홍동 다세대",appraisal:195000000,rounds:[195000000,136500000,95550000],start:3,take:130000000,market:185000000,extra:0,minLabel:"2회 유찰"}
+];
+let cur=0;
+const won=n=>{n=Math.round(n);if(n===0)return"0원";const e=Math.floor(n/100000000),m=Math.round((n%100000000)/10000);let s="";if(e)s+=e+"억 ";if(m)s+=m.toLocaleString()+"만";return(s||n.toLocaleString())+"원"};
+
+function series(c){const a=[...c.rounds];while(a.length<7)a.push(Math.round(a[a.length-1]*0.7));return a}
+
+function drawChart(){
+ const c=CASES[cur],s=series(c),W=720,H=300,L=64,R=16,T=16,B=34;
+ const maxV=Math.max(...s.map(v=>v+c.take+v*0.046),c.market)*1.08;
+ const x=i=>L+i*(W-L-R)/(s.length-1), y=v=>T+(1-v/maxV)*(H-T-B);
+ let g='';
+ for(let k=0;k<=4;k++){const v=maxV*k/4;g+=`<line x1="${L}" y1="${y(v)}" x2="${W-R}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-9}" y="${y(v)+4}" text-anchor="end" font-size="10" fill="var(--ink-3)">${Math.round(v/100000000*10)/10}억</text>`}
+ // future shading
+ const fx=x(c.start-1);
+ g+=`<rect x="${fx}" y="${T}" width="${W-R-fx}" height="${H-T-B}" fill="var(--ink-3)" opacity="0.06"/>`;
+ g+=`<text x="${fx+8}" y="${T+14}" font-size="10" fill="var(--ink-3)">향후 전망</text>`;
+ s.forEach((v,i)=>{g+=`<text x="${x(i)}" y="${H-12}" text-anchor="middle" font-size="10.5" fill="${i<c.start?'var(--ink-2)':'var(--ink-3)'}">${i+1}회차</text>`});
+ g+=`<line x1="${L}" y1="${y(c.market)}" x2="${W-R}" y2="${y(c.market)}" stroke="var(--good)" stroke-width="2" stroke-dasharray="5 4"/><text x="${W-R}" y="${y(c.market)-7}" text-anchor="end" font-size="10.5" fill="var(--good)" font-weight="700">시세 ${won(c.market)}</text>`;
+ const p1=s.map((v,i)=>`${x(i)},${y(v)}`).join(" ");
+ const p2=s.map((v,i)=>`${x(i)},${y(v+c.take+v*0.046)}`).join(" ");
+ g+=`<polyline points="${p2}" fill="none" stroke="var(--bad)" stroke-width="2.5"/>`;
+ g+=`<polyline points="${p1}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>`;
+ s.forEach((v,i)=>{g+=`<circle cx="${x(i)}" cy="${y(v)}" r="${i===c.start-1?5:3.5}" fill="var(--accent)"/><circle cx="${x(i)}" cy="${y(v+c.take+v*0.046)}" r="3.5" fill="var(--bad)"/>`});
+ g+=`<text x="${x(c.start-1)}" y="${y(s[c.start-1])-12}" text-anchor="middle" font-size="10.5" font-weight="700" fill="var(--accent)">현재 ${won(s[c.start-1])}</text>`;
+ document.getElementById('chart').innerHTML=g;
+}
+
+function calc(){
+ const c=CASES[cur],s=series(c),lo=Math.round(s[s.length-1]*0.8),hi=c.appraisal;
+ const r=+document.getElementById('bid').value;
+ const bid=Math.round((lo+(hi-lo)*r/100)/10000)*10000;
+ const tax=bid*0.046, total=bid+c.take+tax+c.extra, diff=c.market-total;
+ document.getElementById('bidval').textContent=won(bid);
+ document.getElementById('c-bid').textContent=won(bid);
+ document.getElementById('c-take').textContent=won(c.take);
+ document.getElementById('c-tax').textContent=won(tax+c.extra);
+ document.getElementById('c-total').textContent=won(total);
+ const el=document.getElementById('result');
+ el.className='result '+(diff>0?'good':'bad');
+ el.innerHTML=diff>0
+  ?`<b>시세 대비 ${won(diff)} 여유</b><br>실질 매입가 ${won(total)} 대비 시세 ${won(c.market)}. 명도 비용과 보수비를 추가로 감안하고도 여유가 남는지 확인하세요.`
+  :`<b>시세 대비 ${won(-diff)} 손실</b><br>실질 매입가 ${won(total)}가 시세 ${won(c.market)}를 넘습니다. ${c.take>0?'인수 보증금 '+won(c.take)+'이 그대로 얹히기 때문입니다.':'낙찰가가 시세에 너무 근접했습니다.'}`;
+}
+
+document.querySelectorAll('.tool-tabs button').forEach(b=>b.addEventListener('click',()=>{
+ document.querySelectorAll('.tool-tabs button').forEach(o=>o.setAttribute('aria-selected','false'));
+ b.setAttribute('aria-selected','true');cur=+b.dataset.case;
+ document.getElementById('bid').value=cur===0?50:35;drawChart();calc();
+}));
+document.getElementById('bid').addEventListener('input',calc);
+drawChart();calc();
+</script>
+</body>
+</html>
